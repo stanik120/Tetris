@@ -69,16 +69,19 @@ class Block():
     def on_ground(self):
         """ checks if a square is on the ground, if so moves all squares to square_list """
         for square in self.type_of_block:
+            position_x = self.x + square[0] * BLOCKS_SCALE
+            position_y = self.y + square[1] * BLOCKS_SCALE
             # if square is on the bottom off the screen
-            if self.y + square[1] * BLOCKS_SCALE <= BLOCKS_SCALE:
+            if position_y <= BLOCKS_SCALE:
                 self.square_on_ground = True
                 break
 
             for sq in self.squares_list:
                 # if square is on the other square from square_list
-                if self.y + square[1] * BLOCKS_SCALE <= sq[1] + BLOCKS_SCALE and self.x + square[0] * BLOCKS_SCALE == sq[0]:
-                    self.square_on_ground = True
-                    break
+                if position_x == sq[0]:
+                    if position_y <= sq[1] + BLOCKS_SCALE and position_y > sq[1]:
+                        self.square_on_ground = True
+                        break
         
         if self.square_on_ground:
             # move all square from block to square_list and delet object 
@@ -121,7 +124,7 @@ class Block():
                 self.can_move_right = False
             # disable movement if any block is next to the other square
             for sq in self.squares_list:
-                if position_y < sq[1] + BLOCKS_SCALE / 2 and position_y > sq[1] - BLOCKS_SCALE / 2:
+                if position_y <= sq[1] + BLOCKS_SCALE / 2 and position_y >= sq[1] - BLOCKS_SCALE / 2:
                     if position_x == sq[0] - BLOCKS_SCALE:
                         self.can_move_right = False
                     if position_x == sq[0] + BLOCKS_SCALE:
