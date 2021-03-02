@@ -1,6 +1,8 @@
 """ Simply tetris game """
 import arcade
 import random
+
+from pyglet.libs.win32.constants import NULL
 # Settings
 WINDOW_WIDTH = 400
 WINDOW_HEIGHT = 800
@@ -32,24 +34,33 @@ class Block():
         self.y = WINDOW_HEIGHT
         self.can_move_left = True
         self.can_move_right = True
+        self.move_down = False
+        self.color = NULL
         # if square is on ground change to True
         self.square_on_ground = False
         # randomly selects the type of block
         random_number = random.randint(0,6)
         if random_number == 0:
             self.type_of_block = I_BLOCK
+            self.color = arcade.csscolor.BLUE
         elif random_number == 1:
             self.type_of_block = J_BLOCK
+            self.color = arcade.csscolor.RED
         elif random_number == 2:
             self.type_of_block = L_BLOCK
+            self.color = arcade.csscolor.YELLOW
         elif random_number == 3:
             self.type_of_block = O_BLOCK
+            self.color = arcade.csscolor.GREEN
         elif random_number == 4:
             self.type_of_block = S_BLOCK
+            self.color = arcade.csscolor.ORANGE
         elif random_number == 5:
             self.type_of_block = T_BLOCK
+            self.color = arcade.csscolor.HOTPINK
         elif random_number == 6:
             self.type_of_block = Z_BLOCK
+            self.color = arcade.csscolor.PURPLE
 
     def rotate(self):
         """ rotate the block """
@@ -111,14 +122,17 @@ class Block():
         if self.square_on_ground:
             # move all square from block to square_list and delet object 
             for square in self.type_of_block:
-                Block.squares_list.append([self.x + square[0] * BLOCKS_SCALE, round_y(self.y + square[1] * BLOCKS_SCALE)])
+                Block.squares_list.append([self.x + square[0] * BLOCKS_SCALE, round_y(self.y + square[1] * BLOCKS_SCALE), self.color])
             self.line_check()
 
     def update(self):
         self.on_ground()
         # block fall down
         if not self.square_on_ground:
-            self.y -= FALL_SPEED
+            if self.move_down:
+                self.y -= FALL_SPEED * 2
+            else:
+                self.y -= FALL_SPEED
 
     def on_draw(self):
         """ drow the block """
@@ -128,7 +142,8 @@ class Block():
                         start_x = 10,
                         start_y = WINDOW_HEIGHT - 25,
                         color = arcade.csscolor.WHITE,
-                        font_size = BLOCKS_SCALE)
+                        font_size = BLOCKS_SCALE,
+                        bold = True)
         self.can_move_left = True
         self.can_move_right = True
         # draw all square where you can't move
@@ -138,7 +153,7 @@ class Block():
                                         center_y= square[1],
                                         width= BLOCKS_SCALE,
                                         height= BLOCKS_SCALE,
-                                        color= arcade.csscolor.WHITE)            
+                                        color= square[2])
 
         # draw all square in the block where you can move 
         for square in self.type_of_block:
@@ -149,7 +164,7 @@ class Block():
                                         center_y= position_y,
                                         width= BLOCKS_SCALE,
                                         height= BLOCKS_SCALE,
-                                        color= arcade.csscolor.WHITE)        
+                                        color= self.color)        
             # disable movement if any block is next to the wall
             if self.x - BLOCKS_SCALE / 2 + square[0] * BLOCKS_SCALE == 0:
                 self.can_move_left = False
@@ -167,6 +182,7 @@ class Tetris(arcade.Window):
     """ main game class """
     def __init__(self, width, height, title):
         super().__init__(width, height, title)
+        self.game_over = False
         self.move_left = False
         self.move_right = False
         self.move_down = False
@@ -187,7 +203,13 @@ class Tetris(arcade.Window):
             self.move_right = True
         # move down
         if symbol == arcade.key.S or symbol == arcade.key.DOWN:
-            self.move_down = True
+            self.block.move_down = True
+        # game over
+        if self.game_over and symbol == arcade.key.ENTER:
+            Block.squares_list.clear()
+            Block.point = 0
+            self.game_over = False
+            self.block = Block()
 
     def on_key_release(self, symbol: int, modifiers: int):
         # stop moving left
@@ -200,7 +222,7 @@ class Tetris(arcade.Window):
             self.move_timer = 0
         # stop moving down
         if symbol == arcade.key.S or symbol == arcade.key.DOWN:
-            self.move_down = False
+            self.block.move_down = False
 
     def update(self, delta_time: float):
         # reset movement speed counter
@@ -216,15 +238,41 @@ class Tetris(arcade.Window):
             if self.move_timer == 0:
                 self.block.move_right()
             self.move_timer += 1
-
-        self.block.update()
+        if not self.game_over:
+            self.block.update()
         # if block is on ground make new object
-        if self.block.square_on_ground:
-            self.block = Block()
-
+        if not self.game_over and self.block.square_on_ground:
+            if self.block.y == WINDOW_HEIGHT:
+                self.game_over = True
+                del(self.block)
+            else:
+                self.block = Block()
+            
     def on_draw(self):
         arcade.start_render()
-        self.block.on_draw()
+        if not self.game_over:
+            self.block.on_draw()
+        if self.game_over:
+            arcade.draw_text(
+                text = "Game Over",
+                start_x = 0,
+                start_y = WINDOW_HEIGHT / 2,
+                font_size = BLOCKS_SCALE * 2,
+                color = arcade.csscolor.GREEN,
+                bold = True,
+                width = WINDOW_WIDTH,
+                align = "center"
+                )
+            arcade.draw_text(
+                text = f"You got {Block.point} points",
+                start_x = 0,
+                start_y = WINDOW_HEIGHT / 2 - BLOCKS_SCALE * 2,
+                font_size = BLOCKS_SCALE * 2,
+                color = arcade.csscolor.GREEN,
+                bold = True,
+                width = WINDOW_WIDTH,
+                align = "center"
+                )
 
 def main():
     """ main function to initialize game """
