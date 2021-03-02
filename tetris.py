@@ -1,8 +1,6 @@
 """ Simply tetris game """
 import arcade
 import random
-
-from pyglet.libs.win32.constants import NULL
 # Settings
 WINDOW_WIDTH = 400
 WINDOW_HEIGHT = 800
@@ -35,7 +33,7 @@ class Block():
         self.can_move_left = True
         self.can_move_right = True
         self.move_down = False
-        self.color = NULL
+        self.color = None
         # if square is on ground change to True
         self.square_on_ground = False
         # randomly selects the type of block
