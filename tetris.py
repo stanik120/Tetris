@@ -18,13 +18,17 @@ S_BLOCK = ((0, 0), (-1, 0), (0, 1), (1,1))
 T_BLOCK = ((0, 0), (-1, 0), (1, 0), (0,1))
 Z_BLOCK = ((0, 1), (1, 1), (1, 0), (2,0))
 
+def round_y(y):
+    """ round y position off block """
+    return round(y / BLOCKS_SCALE) * BLOCKS_SCALE
+
 class Block():
     """ create and hold actual block """
     # list of all squares which you have no control
     squares_list = []
     def __init__(self):
         self.x = WINDOW_WIDTH / 2 + BLOCKS_SCALE / 2
-        self.y = WINDOW_HEIGHT / 2 + BLOCKS_SCALE / 2
+        self.y = WINDOW_HEIGHT
         self.can_move_left = True
         self.can_move_right = True
         # if square is on ground change to True
@@ -66,14 +70,20 @@ class Block():
         """ checks if a square is on the ground, if so moves all squares to square_list """
         for square in self.type_of_block:
             # if square is on the bottom off the screen
-            if self.y + square[1] * BLOCKS_SCALE <= BLOCKS_SCALE / 2:
+            if self.y + square[1] * BLOCKS_SCALE <= BLOCKS_SCALE:
                 self.square_on_ground = True
                 break
+
+            for sq in self.squares_list:
+                # if square is on the other square from square_list
+                if self.y + square[1] * BLOCKS_SCALE <= sq[1] + BLOCKS_SCALE and self.x + square[0] * BLOCKS_SCALE == sq[0]:
+                    self.square_on_ground = True
+                    break
         
         if self.square_on_ground:
             # move all square from block to square_list and delet object 
             for square in self.type_of_block:
-                Block.squares_list.append([self.x + square[0] * BLOCKS_SCALE, self.y + square[1] * BLOCKS_SCALE])
+                Block.squares_list.append([self.x + square[0] * BLOCKS_SCALE, round_y(self.y + square[1] * BLOCKS_SCALE)])
 
     def update(self):
         self.on_ground()
@@ -82,9 +92,9 @@ class Block():
             self.y -= FALL_SPEED
 
     def on_draw(self):
-        """ drow the block """
         self.can_move_left = True
         self.can_move_right = True
+        """ drow the block """
         # draw all square where you can't move
         for square in self.squares_list:
             arcade.draw_rectangle_filled(
@@ -95,19 +105,28 @@ class Block():
                                         color= arcade.csscolor.WHITE)            
 
         # draw all square in the block where you can move 
-        for elem in self.type_of_block:
+        for square in self.type_of_block:
+            position_x = self.x + square[0] * BLOCKS_SCALE
+            position_y = self.y + square[1] * BLOCKS_SCALE
             arcade.draw_rectangle_filled(
-                                        center_x= self.x + elem[0] * BLOCKS_SCALE,
-                                        center_y= self.y + elem[1] * BLOCKS_SCALE,
+                                        center_x= position_x,
+                                        center_y= position_y,
                                         width= BLOCKS_SCALE,
                                         height= BLOCKS_SCALE,
                                         color= arcade.csscolor.WHITE)        
             # disable movement if any block is next to the wall
-            if self.x - BLOCKS_SCALE / 2 + elem[0] * BLOCKS_SCALE == 0:
+            if self.x - BLOCKS_SCALE / 2 + square[0] * BLOCKS_SCALE == 0:
                 self.can_move_left = False
-            if self.x + BLOCKS_SCALE / 2 + elem[0] * BLOCKS_SCALE == WINDOW_WIDTH:
+            if self.x + BLOCKS_SCALE / 2 + square[0] * BLOCKS_SCALE == WINDOW_WIDTH:
                 self.can_move_right = False
-            
+            # disable movement if any block is next to the other square
+            for sq in self.squares_list:
+                if position_y < sq[1] + BLOCKS_SCALE / 2 and position_y > sq[1] - BLOCKS_SCALE / 2:
+                    if position_x == sq[0] - BLOCKS_SCALE:
+                        self.can_move_right = False
+                    if position_x == sq[0] + BLOCKS_SCALE:
+                        self.can_move_left = False
+
 class Tetris(arcade.Window):
     """ main game class """
     def __init__(self, width, height, title):
