@@ -2,8 +2,8 @@
 import arcade
 import random
 # Settings
-WINDOW_WIDTH = 200
-WINDOW_HEIGHT = 400
+WINDOW_WIDTH = 400
+WINDOW_HEIGHT = 800
 # horizontal movement speed (the higher the value, the slower it moves)
 MOVE_SPEED = 4
 FALL_SPEED = 5
@@ -82,7 +82,11 @@ class Block():
                 square_to_remove = []
                 for square in Block.squares_list:
                     if square[1] == k:
-                        square_to_remove.append(square)
+                        square_to_remove.append(square)                        
+                    # move square from top of the deleted square to the bootom
+                    if square[1] > k:
+                        square[1] -= BLOCKS_SCALE
+                # remove square
                 for square in square_to_remove:
                     Block.squares_list.remove(square)
                 Block.point += 1
