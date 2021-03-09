@@ -1,4 +1,14 @@
-""" Simply tetris game """
+"""
+Simply tetris game.
+
+    File name: tetris.py
+    Author: Stanik
+    Email: stanik@tuta.io
+    GitHub: https://github.com/stanik120
+    License: GPL 3
+    Python Version: 3.9.1
+    
+"""
 import arcade
 import random
 # Settings
